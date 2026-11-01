@@ -1,0 +1,13 @@
+[Unit]
+Description=Hermes Voice · serviço de voz (texto para áudio)
+After=network-online.target
+
+[Service]
+Environment=HERMES_HOME=%h/.hermes/profiles/pessoal
+Environment=APNS_TOPIC=com.example.hermesvoice
+ExecStart=%h/.hermes/hermes-agent/venv/bin/python %h/code/hermes-voice-ios/server/voz.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

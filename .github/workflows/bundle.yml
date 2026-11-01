@@ -1,0 +1,49 @@
+name: Registar Bundle ID
+
+on:
+  workflow_dispatch:
+
+jobs:
+  registar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Dependências
+        run: pip install --quiet "pyjwt[crypto]"
+
+      - name: Chave da App Store Connect
+        env:
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          echo "$ASC_KEY_P8" > "$RUNNER_TEMP/AuthKey.p8"
+          echo "ASC_KEY_PATH=$RUNNER_TEMP/AuthKey.p8" >> "$GITHUB_ENV"
+
+      - name: Garantir Bundle ID
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          BUNDLE_ID: ${{ vars.BUNDLE_ID }}
+          BUNDLE_NAME: Pessoal
+          BUNDLE_CAPACIDADES: PUSH_NOTIFICATIONS
+        run: python3 ci/garantir_bundle.py
+
+      - name: Estado do TestFlight
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          BUNDLE_ID: ${{ vars.BUNDLE_ID }}
+        working-directory: ci
+        run: python3 estado_testflight.py
+
+      - name: Certificados da conta
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        working-directory: ci
+        run: python3 listar_certificados.py
+
+      - name: Apagar chave
+        if: always()
+        run: rm -f "$RUNNER_TEMP/AuthKey.p8"
